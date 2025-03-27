@@ -274,7 +274,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         console.log('Người dùng chưa đăng nhập');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
       console.log('Người dùng đã đăng nhập:', user.uid);
@@ -287,14 +287,14 @@
         ownerEmail = user.email; // Lưu email của owner
         if (!homeId) {
           console.log('Không tìm thấy homeId cho người dùng');
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
           return;
         }
         const memberRef = ref(db, `homes/${homeId}/members/${user.uid}`);
         const memberSnapshot = await get(memberRef);
         if (!memberSnapshot.exists()) {
           console.log('Người dùng không phải thành viên của ngôi nhà:', homeId);
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
           return;
         }
         if (memberSnapshot.val().role !== 'owner') {
@@ -306,7 +306,7 @@
         initializePage();
       } else {
         console.log('Không tìm thấy dữ liệu người dùng trong users');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       }
     });
 

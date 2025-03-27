@@ -229,7 +229,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         console.log('Người dùng chưa đăng nhập');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
 
@@ -239,7 +239,7 @@
           const userData = userSnapshot.val();
           if (!userData.homeId) {
             console.log('Không tìm thấy homeId');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
             return;
           }
 
@@ -262,11 +262,11 @@
             displayOtp();
           } else {
             console.log('Người dùng không phải thành viên của ngôi nhà');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
           }
         } else {
           console.log('Không tìm thấy dữ liệu người dùng');
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
         }
       } catch (error) {
         showMessage('Lỗi khi kiểm tra trạng thái người dùng: ' + error.message, 'error');
@@ -359,7 +359,7 @@
     document.getElementById('logoutButton').addEventListener('click', async () => {
       try {
         await signOut(auth);
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       } catch (error) {
         showMessage('Lỗi khi đăng xuất: ' + error.message, 'error');
       }

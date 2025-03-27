@@ -251,7 +251,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         console.log('Người dùng chưa đăng nhập');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
       console.log('Người dùng đã đăng nhập:', user.uid);
@@ -263,14 +263,14 @@
         homeId = userData.homeId;
         if (!homeId) {
           console.log('Không tìm thấy homeId cho người dùng');
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
           return;
         }
         const memberRef = ref(db, `homes/${homeId}/members/${user.uid}`);
         const memberSnapshot = await get(memberRef);
         if (!memberSnapshot.exists()) {
           console.log('Người dùng không phải thành viên của ngôi nhà:', homeId);
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
           return;
         }
         if (memberSnapshot.val().role !== 'owner') {
@@ -282,7 +282,7 @@
         showAuthModal();
       } else {
         console.log('Không tìm thấy dữ liệu người dùng trong users');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       }
     });
 
@@ -409,7 +409,7 @@
     });
     document.getElementById('savePendingCodeBtn').addEventListener('click', changePendingCode);
     document.getElementById('saveHomeIdBtn').addEventListener('click', changeHomeId);
-    document.getElementById('logoutButton').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
+    document.getElementById('logoutButton').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
