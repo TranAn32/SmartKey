@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh Sách Thành Viên - Hệ Thống Khóa Cửa Thông Minh</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      min-height: 100vh;
+      margin: 0;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #74ebd5, #acb6e5);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+      font-weight: 500;
+    }
+    .nav-link:hover {
+      color: #f0f0f0 !important;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    .list-group-item {
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-sm {
+      border-radius: 8px;
+      margin-left: 5px;
+    }
+    .role-select {
+      margin-right: 10px;
+      padding: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="owner.html">Hệ Thống Khóa Cửa</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="owner.html">Trang Chủ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="history.html">Lịch Sử</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="pending.html">Danh Sách Chờ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="members.html">Thành Viên</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="profile.html">Hồ Sơ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutButton">Đăng Xuất</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2 class="text-center mb-4">Danh Sách Thành Viên</h2>
+    <ul id="memberList" class="list-group"></ul>
+  </div>
+
+  <!-- Modal thông báo -->
+  <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalLabel">Thông Báo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="messageText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, onValue, get, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByDFV6Wm3mLriHyuV9-3Z2_xeXLJtKD9Y",
+      authDomain: "henhung-82bcc.firebaseapp.com",
+      databaseURL: "https://henhung-82bcc-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "henhung-82bcc",
+      storageBucket: "henhung-82bcc.firebasestorage.app",
+      messagingSenderId: "889326845777",
+      appId: "1:889326845777:web:431c026ad53570bdd75d70",
+      measurementId: "G-WMTG0D0239"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    let homeId = null;
+    let currentUserId = null;
+
+    // Hàm hiển thị thông báo
+    function showMessage(text, type = 'success') {
+      const messageText = document.getElementById('messageText');
+      const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+      messageText.textContent = text;
+      messageText.className = type === 'success' ? 'text-success' : 'text-danger';
+      modal.show();
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        console.log('Người dùng chưa đăng nhập');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUserId = user.uid; // Lưu UID của người dùng hiện tại
+      const userSnapshot = await get(ref(database, `users/${user.uid}`));
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.val();
+        if (!userData.homeId) {
+          console.log('Không tìm thấy homeId');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        homeId = userData.homeId; // Lưu homeId vào biến toàn cục
+
+        const homeSnapshot = await get(ref(database, `homes/${homeId}/members/${user.uid}`));
+        if (homeSnapshot.exists()) {
+          const memberData = homeSnapshot.val();
+          if (memberData.role !== 'owner') {
+            console.log('Người dùng không phải owner');
+            window.location.href = 'member.html';
+            return;
+          }
+
+          // Tải danh sách thành viên
+          const membersRef = ref(database, `homes/${homeId}/members`);
+          onValue(membersRef, (snapshot) => {
+            const memberList = document.getElementById('memberList');
+            memberList.innerHTML = '';
+            if (snapshot.exists()) {
+              const members = snapshot.val();
+              let hasMembers = false;
+              for (const [uid, data] of Object.entries(members)) {
+                hasMembers = true;
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                if (uid === currentUserId) {
+                  // Không cho phép thay đổi vai trò của chính mình
+                  li.innerHTML = `${data.name} (${data.email}) <span class="badge bg-primary">Owner</span>`;
+                } else {
+                  li.innerHTML = `
+                    ${data.name} (${data.email})
+                    <div>
+                      <select class="role-select" onchange="changeRole('${homeId}', '${uid}', '${data.name}', this.value)">
+                        <option value="member" ${data.role === 'member' ? 'selected' : ''}>Member</option>
+                        <option value="owner" ${data.role === 'owner' ? 'selected' : ''}>Owner</option>
+                      </select>
+                      <button class="btn btn-danger btn-sm" onclick="removeMember('${homeId}', '${uid}', '${data.name}')">Xóa</button>
+                    </div>
+                  `;
+                }
+                memberList.appendChild(li);
+              }
+              if (!hasMembers) {
+                memberList.innerHTML = '<li class="list-group-item text-center">Không có thành viên nào.</li>';
+              }
+            } else {
+              memberList.innerHTML = '<li class="list-group-item text-center">Không có thành viên nào.</li>';
+            }
+          }, (error) => {
+            showMessage('Lỗi khi tải danh sách thành viên: ' + error.message, 'error');
+          });
+        } else {
+          console.log('Người dùng không phải thành viên của ngôi nhà');
+          window.location.href = 'login.html';
+        }
+      } else {
+        console.log('Không tìm thấy dữ liệu người dùng');
+        window.location.href = 'login.html';
+      }
+    });
+
+    // Hàm thay đổi vai trò
+    window.changeRole = async (homeId, userId, name, newRole) => {
+      try {
+        // Cập nhật vai trò trong homes
+        await set(ref(database, `homes/${homeId}/members/${userId}/role`), newRole);
+        // Cập nhật vai trò trong users
+        await set(ref(database, `users/${userId}/role`), newRole);
+        // Ghi log hành động
+        await push(ref(database, `logs/${homeId}`), {
+          action: 'change_role',
+          userId: userId,
+          newRole: newRole,
+          timestamp: new Date().toISOString(),
+          PerformedBy: auth.currentUser.uid
+        });
+        showMessage(`Đã thay đổi vai trò của ${name} thành ${newRole}!`);
+      } catch (error) {
+        showMessage('Lỗi khi thay đổi vai trò: ' + error.message, 'error');
+      }
+    };
+
+    // Hàm xóa thành viên
+    window.removeMember = async (homeId, userId, name) => {
+      try {
+        // Lấy thông tin thành viên trước khi xóa
+        const userSnapshot = await get(ref(database, `users/${userId}`));
+        const userData = userSnapshot.val();
+        // Xóa thành viên khỏi danh sách members
+        await remove(ref(database, `homes/${homeId}/members/${userId}`));
+        // Cập nhật trạng thái người dùng thành pending
+        await set(ref(database, `users/${userId}/role`), 'pending');
+        // Thêm lại vào danh sách chờ
+        await set(ref(database, `homes/${homeId}/pending/${userId}`), {
+          name: userData.name,
+          email: userData.email,
+          requestTime: new Date().toISOString()
+        });
+        // Ghi log hành động
+        await push(ref(database, `logs/${homeId}`), {
+          action: 'remove_access',
+          userId: userId,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        showMessage(`Đã xóa ${name} khỏi danh sách thành viên!`);
+      } catch (error) {
+        showMessage('Lỗi khi xóa thành viên: ' + error.message, 'error');
+      }
+    };
+
+    document.getElementById('logoutButton').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

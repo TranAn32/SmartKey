@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Chủ (Owner) - Hệ Thống Khóa Cửa Thông Minh</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .nav-link:hover {
+      color: #e0e0e0 !important;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      color: white;
+      font-weight: 600;
+      padding: 15px;
+      border-bottom: none;
+    }
+    .card-body {
+      padding: 20px;
+      background: white;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .status-item i {
+      margin-right: 10px;
+      color: #007bff;
+    }
+    .btn {
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #28a745;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .timer {
+      font-size: 0.9em;
+      color: #dc3545;
+      margin-left: 10px;
+    }
+    .modal-content {
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    .modal-header {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      color: white;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="owner.html">Hệ Thống Khóa Cửa</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="owner.html">Trang Chủ</a></li>
+          <li class="nav-item"><a class="nav-link" href="history.html">Lịch Sử</a></li>
+          <li class="nav-item"><a class="nav-link" href="pending.html">Danh Sách Chờ</a></li>
+          <li class="nav-item"><a class="nav-link" href="members.html">Thành Viên</a></li>
+          <li class="nav-item"><a class="nav-link" href="security.html">Bảo mật</a></li>
+          <li class="nav-item"><a class="nav-link" href="profile.html">Hồ Sơ</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="logoutButton">Đăng Xuất</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0">Điều Khiển Cửa (Owner)</h4>
+      </div>
+      <div class="card-body">
+        <!-- Thông tin trạng thái -->
+        <div class="status-item">
+          <i class="fas fa-key"></i>
+          <span id="currentPassword">Mật khẩu hiện tại: Đang tải...</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-lock"></i>
+          <span id="currentOTP">OTP hiện tại: Chưa tạo</span>
+          <span id="otpTimer" class="timer"></span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-exclamation-circle"></i>
+          <span id="wrongAttempts">Số lần nhập sai: Đang tải...</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-shield-alt"></i>
+          <span id="lockStatus">Trạng thái bảng điều khiển: Đang tải...</span>
+        </div>
+
+        <!-- Trạng thái cửa -->
+        <div class="text-center mt-4">
+          <h5>Trạng thái cửa: <span id="doorStateText">Đang tải...</span></h5>
+          <label class="switch mt-3">
+            <input type="checkbox" id="doorToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Nút điều khiển -->
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#passwordModal">Đổi Mật Khẩu</button>
+          <button class="btn btn-success" id="generateOTPBtn">Tạo OTP</button>
+          <button class="btn btn-danger" id="lockControlBtn">Khóa Bảng Điều Khiển</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal đổi mật khẩu -->
+  <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="passwordModalLabel">Đổi Mật Khẩu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newPasswordModal" class="form-label">Mật khẩu mới (4 chữ số):</label>
+            <input type="number" id="newPasswordModal" class="form-control" placeholder="Nhập mật khẩu mới" maxlength="4">
+          </div>
+          <div class="mb-3">
+            <label for="confirmPasswordModal" class="form-label">Xác nhận mật khẩu:</label>
+            <input type="number" id="confirmPasswordModal" class="form-control" placeholder="Xác nhận mật khẩu" maxlength="4">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" id="savePasswordBtn">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal thông báo -->
+  <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalLabel">Thông Báo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="messageText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, get, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByDFV6Wm3mLriHyuV9-3Z2_xeXLJtKD9Y",
+      authDomain: "henhung-82bcc.firebaseapp.com",
+      databaseURL: "https://henhung-82bcc-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "henhung-82bcc",
+      storageBucket: "henhung-82bcc.firebasestorage.app",
+      messagingSenderId: "889326845777",
+      appId: "1:889326845777:web:431c026ad53570bdd75d70",
+      measurementId: "G-WMTG0D0239"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let homeId = null;
+    let ownerEmail = null; // Lưu email của owner
+    const OTP_EXPIRATION_TIME = 300; // 5 phút (giây)
+    let countdownInterval = null;
+    const MAX_WRONG_ATTEMPTS = 3; // Số lần nhập sai tối đa
+
+    // Hàm hiển thị thông báo
+    function showMessage(text, type = 'success') {
+      const messageText = document.getElementById('messageText');
+      const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+      messageText.textContent = text;
+      messageText.className = type === 'success' ? 'text-success' : 'text-danger';
+      modal.show();
+    }
+
+    // Kiểm tra trạng thái đăng nhập và lấy email của owner
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        console.log('Người dùng chưa đăng nhập');
+        window.location.href = 'login.html';
+        return;
+      }
+      console.log('Người dùng đã đăng nhập:', user.uid);
+      const userRef = ref(db, `users/${user.uid}`);
+      const userSnapshot = await get(userRef);
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.val();
+        console.log('Dữ liệu người dùng:', userData);
+        homeId = userData.homeId;
+        ownerEmail = user.email; // Lưu email của owner
+        if (!homeId) {
+          console.log('Không tìm thấy homeId cho người dùng');
+          window.location.href = 'login.html';
+          return;
+        }
+        const memberRef = ref(db, `homes/${homeId}/members/${user.uid}`);
+        const memberSnapshot = await get(memberRef);
+        if (!memberSnapshot.exists()) {
+          console.log('Người dùng không phải thành viên của ngôi nhà:', homeId);
+          window.location.href = 'login.html';
+          return;
+        }
+        if (memberSnapshot.val().role !== 'owner') {
+          console.log('Người dùng không phải owner');
+          window.location.href = 'member.html';
+          return;
+        }
+        console.log('Người dùng là owner, bắt đầu tải dữ liệu');
+        initializePage();
+      } else {
+        console.log('Không tìm thấy dữ liệu người dùng trong users');
+        window.location.href = 'login.html';
+      }
+    });
+
+    // Khởi tạo trang
+    function initializePage() {
+      initializeDoorStatus();
+      initializePassword();
+      initializeOTP();
+      initializeLockStatus();
+      monitorWrongAttempts();
+    }
+
+    // Hiển thị mật khẩu
+    function initializePassword() {
+      onValue(ref(db, `homes/${homeId}/password`), (snapshot) => {
+        const password = snapshot.val();
+        document.getElementById('currentPassword').textContent = `Mật khẩu hiện tại: ${password || 'Chưa đặt'}`;
+      }, (error) => {
+        showMessage('Lỗi đọc mật khẩu: ' + error.message, 'error');
+      });
+    }
+
+    // Hiển thị OTP và đếm ngược
+    function initializeOTP() {
+      onValue(ref(db, `homes/${homeId}/otp`), (snapshot) => {
+        const otpData = snapshot.val();
+        const currentOTP = document.getElementById('currentOTP');
+        const otpTimer = document.getElementById('otpTimer');
+        if (otpData) {
+          let activeOtp = null;
+          for (const [otpId, otp] of Object.entries(otpData)) {
+            const expiresAt = new Date(otp.expiresAt).getTime();
+            if (!otp.used && Date.now() < expiresAt) {
+              activeOtp = { id: otpId, code: otp.code, expiresAt };
+              break;
+            }
+          }
+          if (activeOtp) {
+            currentOTP.textContent = `OTP hiện tại: ${activeOtp.code}`;
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+              const timeLeft = Math.max(0, Math.floor((activeOtp.expiresAt - Date.now()) / 1000));
+              otpTimer.textContent = `(Hết hạn sau: ${timeLeft}s)`;
+              if (timeLeft === 0) {
+                clearInterval(countdownInterval);
+                remove(ref(db, `homes/${homeId}/otp/${activeOtp.id}`));
+              }
+            }, 1000);
+          } else {
+            currentOTP.textContent = 'OTP hiện tại: Chưa tạo';
+            otpTimer.textContent = '';
+            clearInterval(countdownInterval);
+          }
+        } else {
+          currentOTP.textContent = 'OTP hiện tại: Chưa tạo';
+          otpTimer.textContent = '';
+          clearInterval(countdownInterval);
+        }
+      }, (error) => {
+        showMessage('Lỗi đọc OTP: ' + error.message, 'error');
+      });
+    }
+
+    // Hiển thị trạng thái cửa
+    function initializeDoorStatus() {
+      onValue(ref(db, `homes/${homeId}/doorState`), (snapshot) => {
+        const doorState = snapshot.val();
+        const doorStateText = document.getElementById('doorStateText');
+        const doorToggle = document.getElementById('doorToggle');
+        doorStateText.textContent = doorState ? 'Mở' : 'Đóng';
+        doorStateText.className = doorState ? 'text-success' : 'text-danger';
+        doorToggle.checked = doorState;
+      }, (error) => {
+        showMessage('Lỗi đọc trạng thái cửa: ' + error.message, 'error');
+      });
+    }
+
+    // Hiển thị trạng thái khóa và số lần nhập sai
+    function initializeLockStatus() {
+      onValue(ref(db, `homes/${homeId}/lock`), (snapshot) => {
+        const lockState = snapshot.val();
+        const lockStatus = document.getElementById('lockStatus');
+        const lockControlBtn = document.getElementById('lockControlBtn');
+        lockStatus.textContent = `Trạng thái bảng điều khiển: ${lockState ? 'Đã khóa' : 'Đã mở khóa'}`;
+        lockStatus.className = lockState ? 'text-danger' : 'text-success';
+        lockControlBtn.textContent = lockState ? 'Mở Khóa Bảng Điều Khiển' : 'Khóa Bảng Điều Khiển';
+        lockControlBtn.className = `btn ${lockState ? 'btn-success' : 'btn-danger'}`;
+      }, (error) => {
+        showMessage('Lỗi đọc trạng thái khóa: ' + error.message, 'error');
+      });
+
+      onValue(ref(db, `homes/${homeId}/wrongAttempts`), (snapshot) => {
+        const attempts = snapshot.val() || 0;
+        document.getElementById('wrongAttempts').textContent = `Số lần nhập sai: ${attempts}`;
+      }, (error) => {
+        showMessage('Lỗi đọc số lần nhập sai: ' + error.message, 'error');
+      });
+    }
+
+    // Theo dõi số lần nhập sai và xử lý
+    function monitorWrongAttempts() {
+      onValue(ref(db, `homes/${homeId}/wrongAttempts`), async (snapshot) => {
+        const attempts = snapshot.val() || 0;
+        if (attempts > MAX_WRONG_ATTEMPTS) {
+          try {
+            // Chuyển trạng thái lock thành true
+            await set(ref(db, `homes/${homeId}/lock`), true);
+
+            // Ghi thông báo vào cơ sở dữ liệu
+            const notification = {
+              message: `Cảnh báo: Mật khẩu đã bị nhập sai ${attempts} lần. Bảng điều khiển đã bị khóa.`,
+              timestamp: new Date().toISOString(),
+              recipient: ownerEmail,
+              read: false
+            };
+            await push(ref(db, `notifications/${homeId}`), notification);
+
+            // Ghi log
+            await push(ref(db, `logs/${homeId}`), {
+              action: 'lock_control_auto',
+              reason: `Wrong attempts exceeded ${MAX_WRONG_ATTEMPTS}`,
+              timestamp: new Date().toISOString(),
+              performedBy: 'system'
+            });
+
+            showMessage('Bảng điều khiển đã bị khóa do nhập sai quá nhiều lần!', 'error');
+          } catch (error) {
+            showMessage('Lỗi xử lý khi nhập sai quá nhiều lần: ' + error.message, 'error');
+          }
+        }
+      }, (error) => {
+        showMessage('Lỗi theo dõi số lần nhập sai: ' + error.message, 'error');
+      });
+    }
+
+    // Toggle trạng thái cửa
+    async function toggleDoor() {
+      const doorToggle = document.getElementById('doorToggle');
+      const newState = doorToggle.checked;
+      try {
+        await set(ref(db, `homes/${homeId}/doorState`), newState);
+        await push(ref(db, `logs/${homeId}`), {
+          action: newState ? 'open_door' : 'close_door',
+          userId: auth.currentUser.uid,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+      } catch (error) {
+        showMessage('Lỗi thay đổi trạng thái cửa: ' + error.message, 'error');
+        doorToggle.checked = !newState;
+      }
+    }
+
+    // Đổi mật khẩu
+    async function changePassword() {
+      const newPassword = document.getElementById('newPasswordModal').value;
+      const confirmPassword = document.getElementById('confirmPasswordModal').value;
+      if (newPassword.length !== 4 || confirmPassword.length !== 4 || newPassword !== confirmPassword) {
+        showMessage('Mật khẩu phải là 4 chữ số và khớp nhau!', 'error');
+        return;
+      }
+      try {
+        await set(ref(db, `homes/${homeId}/password`), parseInt(newPassword));
+        await push(ref(db, `logs/${homeId}`), {
+          action: 'change_password',
+          userId: auth.currentUser.uid,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        showMessage('Đổi mật khẩu thành công!');
+        bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+      } catch (error) {
+        showMessage('Lỗi đổi mật khẩu: ' + error.message, 'error');
+      }
+    }
+
+    // Tạo OTP
+    async function generateOTP() {
+      const otp = Math.floor(1000 + Math.random() * 9000).toString(); // OTP 6 chữ số
+      const expiresAt = new Date(Date.now() + OTP_EXPIRATION_TIME * 1000).toISOString();
+      try {
+        await set(ref(db, `homes/${homeId}/otp/otp_${otp}`), {
+          code: otp,
+          expiresAt,
+          used: false
+        });
+        await push(ref(db, `logs/${homeId}`), {
+          action: 'create_otp',
+          otpCode: otp,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        showMessage(`OTP mới: ${otp}`);
+      } catch (error) {
+        showMessage('Lỗi tạo OTP: ' + error.message, 'error');
+      }
+    }
+
+    // Toggle khóa bảng điều khiển
+    async function toggleLockControl() {
+      const currentLockState = (await get(ref(db, `homes/${homeId}/lock`))).val();
+      const newLockState = !currentLockState;
+      try {
+        await set(ref(db, `homes/${homeId}/lock`), newLockState);
+        await push(ref(db, `logs/${homeId}`), {
+          action: newLockState ? 'lock_control' : 'unlock_control',
+          userId: auth.currentUser.uid,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        showMessage(newLockState ? 'Đã khóa bảng điều khiển!' : 'Đã mở khóa bảng điều khiển!');
+      } catch (error) {
+        showMessage('Lỗi thay đổi trạng thái khóa: ' + error.message, 'error');
+      }
+    }
+
+    // Gắn sự kiện
+    document.getElementById('doorToggle').addEventListener('change', toggleDoor);
+    document.getElementById('savePasswordBtn').addEventListener('click', changePassword);
+    document.getElementById('generateOTPBtn').addEventListener('click', generateOTP);
+    document.getElementById('lockControlBtn').addEventListener('click', toggleLockControl);
+    document.getElementById('logoutButton').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

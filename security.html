@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảo Mật - Hệ Thống Khóa Cửa Thông Minh</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .nav-link:hover {
+      color: #e0e0e0 !important;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      color: white;
+      font-weight: 600;
+      padding: 15px;
+      border-bottom: none;
+    }
+    .card-body {
+      padding: 20px;
+      background: white;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .status-item i {
+      margin-right: 10px;
+      color: #007bff;
+    }
+    .btn {
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content {
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    .modal-header {
+      background: linear-gradient(90deg, #007bff, #00c4cc);
+      color: white;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="owner.html">Hệ Thống Khóa Cửa</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="owner.html">Trang Chủ</a></li>
+          <li class="nav-item"><a class="nav-link" href="history.html">Lịch Sử</a></li>
+          <li class="nav-item"><a class="nav-link" href="pending.html">Danh Sách Chờ</a></li>
+          <li class="nav-item"><a class="nav-link" href="members.html">Thành Viên</a></li>
+          <li class="nav-item"><a class="nav-link active" href="security.html">Bảo Mật</a></li>
+          <li class="nav-item"><a class="nav-link" href="profile.html">Hồ Sơ</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="logoutButton">Đăng Xuất</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card" id="securityContent">
+      <div class="card-header">
+        <h4 class="mb-0">Bảo Mật</h4>
+      </div>
+      <div class="card-body">
+        <!-- Thông tin bảo mật -->
+        <div class="status-item">
+          <i class="fas fa-home"></i>
+          <span id="homeId">Mã Ngôi Nhà: Đang tải...</span>
+        </div>
+        <div class="status-item">
+          <i class="fas fa-code"></i>
+          <span id="pendingCode">Mã Mời: Đang tải...</span>
+        </div>
+
+        <!-- Nút điều khiển -->
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#pendingCodeModal">Đổi Mã Chờ</button>
+          <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#homeIdModal">Đổi Mã Ngôi Nhà</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal xác thực mật khẩu -->
+  <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="authModalLabel">Xác Thực Mật Khẩu</h5>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="authPassword" class="form-label">Nhập mật khẩu ngôi nhà (4 chữ số):</label>
+            <input type="number" id="authPassword" class="form-control" placeholder="Nhập mật khẩu" maxlength="4">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelAuthBtn">Hủy</button>
+          <button type="button" class="btn btn-primary" id="verifyPasswordBtn">Xác Nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal đổi mã chờ -->
+  <div class="modal fade" id="pendingCodeModal" tabindex="-1" aria-labelledby="pendingCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pendingCodeModalLabel">Đổi Mã Mời</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newPendingCode" class="form-label">Mã Mời mới:</label>
+            <input type="text" id="newPendingCode" class="form-control" placeholder="Nhập mã mời mới">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" id="savePendingCodeBtn">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal đổi mã ngôi nhà -->
+  <div class="modal fade" id="homeIdModal" tabindex="-1" aria-labelledby="homeIdModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="homeIdModalLabel">Đổi Mã Ngôi Nhà</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newHomeId" class="form-label">Mã Ngôi Nhà mới:</label>
+            <input type="text" id="newHomeId" class="form-control" placeholder="Nhập mã ngôi nhà mới">
+          </div>
+          <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Lưu ý: Thay đổi mã ngôi nhà sẽ ảnh hưởng đến tất cả thành viên!</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" id="saveHomeIdBtn">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal thông báo -->
+  <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalLabel">Thông Báo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="messageText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, get, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByDFV6Wm3mLriHyuV9-3Z2_xeXLJtKD9Y",
+      authDomain: "henhung-82bcc.firebaseapp.com",
+      databaseURL: "https://henhung-82bcc-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "henhung-82bcc",
+      storageBucket: "henhung-82bcc.firebasestorage.app",
+      messagingSenderId: "889326845777",
+      appId: "1:889326845777:web:431c026ad53570bdd75d70",
+      measurementId: "G-WMTG0D0239"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let homeId = null;
+    let isAuthenticated = false;
+
+    // Hàm hiển thị thông báo
+    function showMessage(text, type = 'success') {
+      const messageText = document.getElementById('messageText');
+      const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+      messageText.textContent = text;
+      messageText.className = type === 'success' ? 'text-success' : 'text-danger';
+      modal.show();
+    }
+
+    // Kiểm tra trạng thái đăng nhập
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        console.log('Người dùng chưa đăng nhập');
+        window.location.href = 'login.html';
+        return;
+      }
+      console.log('Người dùng đã đăng nhập:', user.uid);
+      const userRef = ref(db, `users/${user.uid}`);
+      const userSnapshot = await get(userRef);
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.val();
+        console.log('Dữ liệu người dùng:', userData);
+        homeId = userData.homeId;
+        if (!homeId) {
+          console.log('Không tìm thấy homeId cho người dùng');
+          window.location.href = 'login.html';
+          return;
+        }
+        const memberRef = ref(db, `homes/${homeId}/members/${user.uid}`);
+        const memberSnapshot = await get(memberRef);
+        if (!memberSnapshot.exists()) {
+          console.log('Người dùng không phải thành viên của ngôi nhà:', homeId);
+          window.location.href = 'login.html';
+          return;
+        }
+        if (memberSnapshot.val().role !== 'owner') {
+          console.log('Người dùng không phải owner');
+          window.location.href = 'member.html';
+          return;
+        }
+        console.log('Người dùng là owner, hiển thị modal xác thực');
+        showAuthModal();
+      } else {
+        console.log('Không tìm thấy dữ liệu người dùng trong users');
+        window.location.href = 'login.html';
+      }
+    });
+
+    // Hiển thị modal xác thực mật khẩu
+    function showAuthModal() {
+      const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+      document.getElementById('securityContent').classList.add('hidden');
+      authModal.show();
+    }
+
+    // Xác thực mật khẩu
+    async function verifyPassword() {
+      const enteredPassword = document.getElementById('authPassword').value;
+      if (enteredPassword.length !== 4) {
+        showMessage('Mật khẩu phải là 4 chữ số!', 'error');
+        return;
+      }
+      try {
+        const passwordSnapshot = await get(ref(db, `homes/${homeId}/password`));
+        const correctPassword = passwordSnapshot.val();
+        if (parseInt(enteredPassword) === correctPassword) {
+          isAuthenticated = true;
+          bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+          document.getElementById('securityContent').classList.remove('hidden');
+          initializePage();
+        } else {
+          showMessage('Mật khẩu không đúng!', 'error');
+        }
+      } catch (error) {
+        showMessage('Lỗi xác thực mật khẩu: ' + error.message, 'error');
+      }
+    }
+
+    // Khởi tạo trang
+    function initializePage() {
+      if (!isAuthenticated) return;
+      initializeHomeInfo();
+    }
+
+    // Hiển thị thông tin ngôi nhà
+    function initializeHomeInfo() {
+      onValue(ref(db, `homes/${homeId}`), (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          console.log('Dữ liệu ngôi nhà:', data);
+          document.getElementById('homeId').textContent = `Mã Ngôi Nhà: ${data.homeCode || homeId}`;
+          document.getElementById('pendingCode').textContent = `Mã Mời: ${data.pendingCode || 'Chưa đặt'}`;
+        } else {
+          showMessage('Không tìm thấy dữ liệu ngôi nhà!', 'error');
+        }
+      }, (error) => {
+        showMessage('Lỗi đọc thông tin ngôi nhà: ' + error.message, 'error');
+      });
+    }
+
+    // Đổi mã chờ
+    async function changePendingCode() {
+      const newPendingCode = document.getElementById('newPendingCode').value.trim();
+      if (!newPendingCode) {
+        showMessage('Vui lòng nhập mã mời mới!', 'error');
+        return;
+      }
+      try {
+        await update(ref(db, `homes/${homeId}`), { pendingCode: newPendingCode });
+        await push(ref(db, `logs/${homeId}`), {
+          action: 'change_pending_code',
+          newCode: newPendingCode,
+          userId: auth.currentUser.uid,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        showMessage('Đổi mã mời thành công!');
+        bootstrap.Modal.getInstance(document.getElementById('pendingCodeModal')).hide();
+      } catch (error) {
+        showMessage('Lỗi đổi mã mời: ' + error.message, 'error');
+      }
+    }
+
+    // Đổi mã ngôi nhà
+    async function changeHomeId() {
+      const newHomeId = document.getElementById('newHomeId').value.trim();
+      if (!newHomeId || newHomeId === homeId) {
+        showMessage('Vui lòng nhập mã ngôi nhà mới khác với mã hiện tại!', 'error');
+        return;
+      }
+      try {
+        const newHomeSnapshot = await get(ref(db, `homes/${newHomeId}`));
+        if (newHomeSnapshot.exists()) {
+          showMessage('Mã ngôi nhà này đã tồn tại!', 'error');
+          return;
+        }
+        const oldHomeData = (await get(ref(db, `homes/${homeId}`))).val();
+        const oldLogsData = (await get(ref(db, `logs/${homeId}`))).val() || {};
+        const members = oldHomeData.members || {};
+        const updates = {};
+        for (const uid in members) {
+          updates[`users/${uid}/homeId`] = newHomeId;
+        }
+        await set(ref(db, `homes/${newHomeId}`), oldHomeData);
+        await set(ref(db, `logs/${newHomeId}`), oldLogsData);
+        await remove(ref(db, `homes/${homeId}`));
+        await remove(ref(db, `logs/${homeId}`));
+        await update(ref(db), updates);
+        await push(ref(db, `logs/${newHomeId}`), {
+          action: 'change_home_id',
+          oldHomeId: homeId,
+          newHomeId,
+          userId: auth.currentUser.uid,
+          timestamp: new Date().toISOString(),
+          performedBy: auth.currentUser.uid
+        });
+        homeId = newHomeId;
+        showMessage('Đổi mã ngôi nhà thành công!');
+        bootstrap.Modal.getInstance(document.getElementById('homeIdModal')).hide();
+      } catch (error) {
+        showMessage('Lỗi đổi mã ngôi nhà: ' + error.message, 'error');
+      }
+    }
+
+    // Gắn sự kiện
+    document.getElementById('verifyPasswordBtn').addEventListener('click', verifyPassword);
+    document.getElementById('cancelAuthBtn').addEventListener('click', () => {
+      window.location.href = 'owner.html';
+    });
+    document.getElementById('savePendingCodeBtn').addEventListener('click', changePendingCode);
+    document.getElementById('saveHomeIdBtn').addEventListener('click', changeHomeId);
+    document.getElementById('logoutButton').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
