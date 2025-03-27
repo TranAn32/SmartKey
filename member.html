@@ -275,7 +275,7 @@
 
     // Hiển thị trạng thái cửa
     function initializeDoorStatus() {
-      onValue(ref(database, `homes/${homeId}/doorState`), (snapshot) => {
+      onValue(ref(database, `doorState`), (snapshot) => {
         const doorState = snapshot.val();
         const doorStateText = document.getElementById('doorStateText');
         const doorToggle = document.getElementById('doorToggle');
@@ -294,7 +294,7 @@
       doorStateText.className = newState ? 'text-success' : 'text-danger';
 
       try {
-        await set(ref(database, `homes/${homeId}/doorState`), newState);
+        await set(ref(database, `doorState`), newState);
 
         // Ghi log
         await push(ref(database, `logs/${homeId}`), {
@@ -314,7 +314,7 @@
     // Hiển thị mật khẩu cửa
     async function displayDoorPassword() {
       try {
-        const passwordSnapshot = await get(ref(database, `homes/${homeId}/password`));
+        const passwordSnapshot = await get(ref(database, `password`));
         const doorPassword = document.getElementById('doorPassword');
         if (passwordSnapshot.exists()) {
           const password = passwordSnapshot.val();
@@ -329,22 +329,21 @@
 
     // Hiển thị mật khẩu OTP
     function displayOtp() {
-      const otpRef = ref(database, `homes/${homeId}/otp`);
-      onValue(otpRef, (snapshot) => {
+      onValue(ref(database, `/`), (snapshot) => {
+        const data = snapshot.val();
+        const otp = data?.otp;
+        const expiresAt = data?.otpExpiresAt;
         const otpPassword = document.getElementById('otpPassword');
-        if (snapshot.exists()) {
-          const otpData = snapshot.val();
-          let activeOtp = null;
-          for (const [otpId, otp] of Object.entries(otpData)) {
-            const expiresAt = new Date(otp.expiresAt).getTime();
-            if (!otp.used && Date.now() < expiresAt) {
-              activeOtp = { id: otpId, code: otp.code, expiresAt };
-              break;
-            }
-          }
-          if (activeOtp) {
-            otpPassword.textContent = activeOtp.code; // Hiển thị trực tiếp OTP
+
+        if (otp && expiresAt) {
+          const expiresAtTime = new Date(expiresAt).getTime();
+          const currentTime = Date.now();
+
+          if (currentTime < expiresAtTime) {
+            // OTP còn hiệu lực
+            otpPassword.textContent = otp;
           } else {
+            // OTP đã hết hạn
             otpPassword.textContent = 'Không có';
           }
         } else {

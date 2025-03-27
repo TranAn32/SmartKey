@@ -321,7 +321,7 @@
 
     // Hiển thị mật khẩu
     function initializePassword() {
-      onValue(ref(db, `homes/${homeId}/password`), (snapshot) => {
+      onValue(ref(db, `password`), (snapshot) => {
         const password = snapshot.val();
         document.getElementById('currentPassword').textContent = `Mật khẩu hiện tại: ${password || 'Chưa đặt'}`;
       }, (error) => {
@@ -334,7 +334,7 @@
       const currentOTP = document.getElementById('currentOTP');
       const otpTimer = document.getElementById('otpTimer');
 
-      onValue(ref(db, `homes/${homeId}`), (snapshot) => {
+      onValue(ref(db, `/`), (snapshot) => {
         const data = snapshot.val();
         const otp = data?.otp;
         const expiresAt = data?.otpExpiresAt;
@@ -353,7 +353,7 @@
               if (timeLeft === 0) {
                 clearInterval(countdownInterval);
                 // Xóa OTP và thời gian hết hạn
-                update(ref(db, `homes/${homeId}`), {
+                update(ref(db, `/`), {
                   otp: null,
                   otpExpiresAt: null
                 });
@@ -361,7 +361,7 @@
             }, 1000);
           } else {
             // OTP đã hết hạn
-            update(ref(db, `homes/${homeId}`), {
+            update(ref(db, `/`), {
               otp: null,
               otpExpiresAt: null
             });
@@ -379,7 +379,7 @@
 
     // Hiển thị trạng thái cửa
     function initializeDoorStatus() {
-      onValue(ref(db, `homes/${homeId}/doorState`), (snapshot) => {
+      onValue(ref(db, `doorState`), (snapshot) => {
         const doorState = snapshot.val();
         const doorStateText = document.getElementById('doorStateText');
         const doorToggle = document.getElementById('doorToggle');
@@ -393,7 +393,7 @@
 
     // Hiển thị trạng thái khóa và số lần nhập sai
     function initializeLockStatus() {
-      onValue(ref(db, `homes/${homeId}/lock`), (snapshot) => {
+      onValue(ref(db, `lock`), (snapshot) => {
         const lockState = snapshot.val();
         const lockStatus = document.getElementById('lockStatus');
         const lockControlBtn = document.getElementById('lockControlBtn');
@@ -405,7 +405,7 @@
         showMessage('Lỗi đọc trạng thái khóa: ' + error.message, 'error');
       });
 
-      onValue(ref(db, `homes/${homeId}/wrongAttempts`), (snapshot) => {
+      onValue(ref(db, `wrongAttempts`), (snapshot) => {
         const attempts = snapshot.val() || 0;
         document.getElementById('wrongAttempts').textContent = `Số lần nhập sai: ${attempts}`;
       }, (error) => {
@@ -415,12 +415,12 @@
 
     // Theo dõi số lần nhập sai và xử lý
     function monitorWrongAttempts() {
-      onValue(ref(db, `homes/${homeId}/wrongAttempts`), async (snapshot) => {
+      onValue(ref(db, `wrongAttempts`), async (snapshot) => {
         const attempts = snapshot.val() || 0;
         if (attempts > MAX_WRONG_ATTEMPTS) {
           try {
             // Chuyển trạng thái lock thành true
-            await set(ref(db, `homes/${homeId}/lock`), true);
+            await set(ref(db, `lock`), true);
 
             // Ghi thông báo vào cơ sở dữ liệu
             const notification = {
@@ -454,7 +454,7 @@
       const doorToggle = document.getElementById('doorToggle');
       const newState = doorToggle.checked;
       try {
-        await set(ref(db, `homes/${homeId}/doorState`), newState);
+        await set(ref(db, `doorState`), newState);
         await push(ref(db, `logs/${homeId}`), {
           action: newState ? 'open_door' : 'close_door',
           userId: auth.currentUser.uid,
@@ -476,7 +476,7 @@
         return;
       }
       try {
-        await set(ref(db, `homes/${homeId}/password`), parseInt(newPassword));
+        await set(ref(db, `password`), parseInt(newPassword));
         await push(ref(db, `logs/${homeId}`), {
           action: 'change_password',
           userId: auth.currentUser.uid,
@@ -495,7 +495,7 @@
       const otp = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit number
       const expiresAt = new Date(Date.now() + OTP_EXPIRATION_TIME * 1000).toISOString();
       try {
-        await update(ref(db, `homes/${homeId}`), {
+        await update(ref(db, `/`), {
           otp: otp,
           otpExpiresAt: expiresAt
         });
@@ -513,10 +513,10 @@
 
     // Toggle khóa bảng điều khiển
     async function toggleLockControl() {
-      const currentLockState = (await get(ref(db, `homes/${homeId}/lock`))).val();
+      const currentLockState = (await get(ref(db, `lock`))).val();
       const newLockState = !currentLockState;
       try {
-        await set(ref(db, `homes/${homeId}/lock`), newLockState);
+        await set(ref(db, `lock`), newLockState);
         await push(ref(db, `logs/${homeId}`), {
           action: newLockState ? 'lock_control' : 'unlock_control',
           userId: auth.currentUser.uid,

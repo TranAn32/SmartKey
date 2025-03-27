@@ -116,33 +116,82 @@
         console.error('homeId chưa được gán giá trị');
         return;
       }
-      onValue(ref(database, `logs/${homeId}`), async (snapshot) => {
-        const logs = snapshot.val();
-        const historyTableBody = document.getElementById('historyTableBody');
-        historyTableBody.innerHTML = '';
 
-        if (logs) {
-          const logEntries = Object.entries(logs).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-          for (const [logId, log] of logEntries) {
-            const userSnapshot = await get(ref(database, `users/${log.performedBy}`));
-            const userName = userSnapshot.exists() ? userSnapshot.val().name : 'Không xác định';
+      const historyTableBody = document.getElementById('historyTableBody');
+      historyTableBody.innerHTML = '';
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${new Date(log.timestamp).toLocaleString('vi-VN')}</td>
-              <td>${translateAction(log.action)}</td>
-              <td>${userName}</td>
-              <td>${getActionDetails(log)}</td>
-            `;
-            historyTableBody.appendChild(row);
+      // Lấy dữ liệu từ logs
+      const logsRef = ref(database, `logs/${homeId}`);
+      const doorHistoryRef = ref(database, `doorHistory`);
+
+      // Biến để lưu trữ tất cả các entries
+      let allEntries = [];
+
+      // Lắng nghe dữ liệu từ logs
+      onValue(logsRef, async (logsSnapshot) => {
+        const logs = logsSnapshot.val();
+        console.log('Dữ liệu logs từ Firebase:', logs);
+
+        // Lắng nghe dữ liệu từ doorHistory
+        onValue(doorHistoryRef, async (doorHistorySnapshot) => {
+          const doorHistory = doorHistorySnapshot.val();
+          console.log('Dữ liệu doorHistory từ Firebase:', doorHistory);
+
+          allEntries = [];
+
+          // Thêm các entries từ logs
+          if (logs) {
+            const logEntries = Object.entries(logs).map(([logId, log]) => ({
+              id: logId,
+              ...log,
+              source: 'logs'
+            }));
+            allEntries.push(...logEntries);
           }
-        } else {
-          historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Không có lịch sử hành động nào.</td></tr>';
-        }
+
+          // Thêm các entries từ doorHistory
+          if (doorHistory) {
+            const doorHistoryEntries = Object.entries(doorHistory).map(([entryId, entry]) => ({
+              id: entryId,
+              ...entry,
+              source: 'doorHistory'
+            }));
+            allEntries.push(...doorHistoryEntries);
+          }
+
+          // Sắp xếp tất cả entries theo timestamp (mới nhất trước)
+          allEntries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          console.log('Tổng số entries sau khi gộp:', allEntries.length);
+
+          // Hiển thị dữ liệu
+          historyTableBody.innerHTML = '';
+          if (allEntries.length > 0) {
+            for (const entry of allEntries) {
+              console.log('Đang xử lý entry:', entry);
+              const userSnapshot = await get(ref(database, `users/${entry.performedBy}`));
+              const userName = userSnapshot.exists() ? userSnapshot.val().name : 'Không xác định';
+              console.log('Tên người dùng:', userName);
+
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${new Date(entry.timestamp).toLocaleString('vi-VN')}</td>
+                <td>${translateAction(entry.action)}</td>
+                <td>${userName}</td>
+                <td>${getActionDetails(entry)}</td>
+              `;
+              historyTableBody.appendChild(row);
+            }
+          } else {
+            console.log('Không tìm thấy dữ liệu từ cả logs và doorHistory');
+            historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Không có lịch sử hành động nào.</td></tr>';
+          }
+        }, (error) => {
+          console.error('Lỗi khi đọc dữ liệu doorHistory:', error);
+          historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải lịch sử doorHistory: ' + error.message + '</td></tr>';
+        });
       }, (error) => {
-        console.error('Lỗi khi đọc dữ liệu lịch sử:', error);
-        const historyTableBody = document.getElementById('historyTableBody');
-        historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải lịch sử: ' + error.message + '</td></tr>';
+        console.error('Lỗi khi đọc dữ liệu logs:', error);
+        historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải lịch sử logs: ' + error.message + '</td></tr>';
       });
     }
 
@@ -158,7 +207,8 @@
         'unlock_control': 'Mở khóa bảng điều khiển',
         'create_otp': 'Tạo OTP',
         'change_pending_code': 'Đổi mã chờ',
-        'change_home_id': 'Đổi mã ngôi nhà'
+        'change_home_id': 'Đổi mã ngôi nhà',
+        'lock_control_auto': 'Khóa tự động (nhập sai quá số lần)'
       };
       return actions[action] || action;
     }
@@ -168,6 +218,7 @@
       if (log.otpCode) return `Mã OTP: ${log.otpCode}`;
       if (log.newCode) return `Mã mới: ${log.newCode}`;
       if (log.newHomeId) return `Mã cũ: ${log.oldHomeId} -> Mã mới: ${log.newHomeId}`;
+      if (log.reason) return `Lý do: ${log.reason}`;
       return '';
     }
 
