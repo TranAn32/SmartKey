@@ -160,7 +160,7 @@
         </div>
         <div class="status-item">
           <i class="fas fa-lock"></i>
-          <span id="currentOTP">OTP hiện tại: Chưa tạo</span>
+          <span id="currentOTP">OTP hiện tại: Chưa khởi tạo</span>
           <span id="otpTimer" class="timer"></span>
         </div>
         <div class="status-item">
@@ -257,7 +257,7 @@
 
     let homeId = null;
     let ownerEmail = null; // Lưu email của owner
-    const OTP_EXPIRATION_TIME = 300; // 5 phút (giây)
+    const OTP_EXPIRATION_TIME = 180; // 3 phút (giây)
     let countdownInterval = null;
     const MAX_WRONG_ATTEMPTS = 3; // Số lần nhập sai tối đa
 
@@ -331,37 +331,44 @@
 
     // Hiển thị OTP và đếm ngược
     function initializeOTP() {
-      onValue(ref(db, `homes/${homeId}/otp`), (snapshot) => {
-        const otpData = snapshot.val();
-        const currentOTP = document.getElementById('currentOTP');
-        const otpTimer = document.getElementById('otpTimer');
-        if (otpData) {
-          let activeOtp = null;
-          for (const [otpId, otp] of Object.entries(otpData)) {
-            const expiresAt = new Date(otp.expiresAt).getTime();
-            if (!otp.used && Date.now() < expiresAt) {
-              activeOtp = { id: otpId, code: otp.code, expiresAt };
-              break;
-            }
-          }
-          if (activeOtp) {
-            currentOTP.textContent = `OTP hiện tại: ${activeOtp.code}`;
+      const currentOTP = document.getElementById('currentOTP');
+      const otpTimer = document.getElementById('otpTimer');
+
+      onValue(ref(db, `homes/${homeId}`), (snapshot) => {
+        const data = snapshot.val();
+        const otp = data?.otp;
+        const expiresAt = data?.otpExpiresAt;
+
+        if (otp && expiresAt) {
+          const expiresAtTime = new Date(expiresAt).getTime();
+          const currentTime = Date.now();
+
+          if (currentTime < expiresAtTime) {
+            // OTP còn hiệu lực
+            currentOTP.textContent = `OTP hiện tại: ${otp}`;
             clearInterval(countdownInterval);
             countdownInterval = setInterval(() => {
-              const timeLeft = Math.max(0, Math.floor((activeOtp.expiresAt - Date.now()) / 1000));
+              const timeLeft = Math.max(0, Math.floor((expiresAtTime - Date.now()) / 1000));
               otpTimer.textContent = `(Hết hạn sau: ${timeLeft}s)`;
               if (timeLeft === 0) {
                 clearInterval(countdownInterval);
-                remove(ref(db, `homes/${homeId}/otp/${activeOtp.id}`));
+                // Xóa OTP và thời gian hết hạn
+                update(ref(db, `homes/${homeId}`), {
+                  otp: null,
+                  otpExpiresAt: null
+                });
               }
             }, 1000);
           } else {
-            currentOTP.textContent = 'OTP hiện tại: Chưa tạo';
-            otpTimer.textContent = '';
-            clearInterval(countdownInterval);
+            // OTP đã hết hạn
+            update(ref(db, `homes/${homeId}`), {
+              otp: null,
+              otpExpiresAt: null
+            });
           }
         } else {
-          currentOTP.textContent = 'OTP hiện tại: Chưa tạo';
+          // Không có OTP
+          currentOTP.textContent = 'OTP hiện tại: Chưa khởi tạo';
           otpTimer.textContent = '';
           clearInterval(countdownInterval);
         }
@@ -485,13 +492,12 @@
 
     // Tạo OTP
     async function generateOTP() {
-      const otp = Math.floor(1000 + Math.random() * 9000).toString(); // OTP 6 chữ số
+      const otp = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit number
       const expiresAt = new Date(Date.now() + OTP_EXPIRATION_TIME * 1000).toISOString();
       try {
-        await set(ref(db, `homes/${homeId}/otp/otp_${otp}`), {
-          code: otp,
-          expiresAt,
-          used: false
+        await update(ref(db, `homes/${homeId}`), {
+          otp: otp,
+          otpExpiresAt: expiresAt
         });
         await push(ref(db, `logs/${homeId}`), {
           action: 'create_otp',
